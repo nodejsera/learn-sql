@@ -228,3 +228,16 @@ order by
     when 'United States' then 2
     else 3
   end, country;
+
+
+
+Challenging Execise chapter 3
+
+3.38
+select customer_id , first_name , last_name , email 
+from customer c2 
+ORDER BY random()
+limit 5
+
+
+

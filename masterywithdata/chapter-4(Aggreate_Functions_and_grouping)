@@ -1,0 +1,5 @@
+4.1
+select count(*), count(email)
+from customer c ;
+
+
