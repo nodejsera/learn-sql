@@ -181,3 +181,276 @@ from rental
 where return_date > rental_date
   or return_date = rental_date
   or return_date < rental_date;
+
+
+3.16 Write a query to list the rentals that haven't been returned
+
+Solution:
+
+A rental that hasn't been returned has a NULL return_date.
+
+select rental_id, return_date
+from rental
+where return_date is null;
+
+
+
+3.17 Write a query to list the films that have a rating that is not 'G' or 'PG'
+
+Solution:
+
+For a film to appear in the output, we want the rating to not be 'PG'. AND we want the rating not to be 'G'. But we will want to include it if the rating is NULL. Be sure to study the use of AND and OR here carefully.
+
+select title, rating
+from film
+where rating != 'PG'
+  and rating != 'G'
+  or rating is null;
+
+3.18 Write a query to return the films with a rating of 'PG', 'G', or 'PG-13'
+
+Solution:
+
+We can use the IN keyword to simplify the query.
+
+select title, rating
+from film
+where rating in ('PG', 'G', 'PG-13');
+
+
+
+3.19 Write a query equivalent to the one below using BETWEEN.
+
+Solution:
+
+select title, length
+from film
+where length between 90 and 120;
+
+
+
+3.20 Write a query to return all film titles that end with the word "GRAFFITI"
+
+Solution:
+
+The key here is to use the % wildcard at the start of the pattern string, as any text can come before the word 'GRAFFITI'. But not at the end of the pattern string.
+
+select title
+from film
+where title like '%GRAFFITI';
+
+
+
+3.21 In exercise 3.17 you wrote a query to list the films that have a rating that is not 'G' or 'PG'. Re-write this query using NOT IN. Do your results include films with a NULL rating?
+
+Solution:
+
+You can re-write the query as below. Your results will not include films with a NULL rating, so as in exercise 3.17 you should be careful when working with a column that could contain NULL values and put in explicit checks if you want them included in the output.
+
+select title, rating
+from film
+where rating not in ('G', 'PG');
+
+
+
+3.22 Write a query the list all the customers with an email address. Order the customers by last name descending
+
+Solution:
+
+We first want to only include customers with an email address (email is not null). Then we order by last_name descending.
+
+select first_name, last_name
+from customer
+where email is not null
+order by last_name desc;
+
+
+
+3.23 Write a query to list the country id's and cities from the city table, first ordered by country id ascending, then by city alphabetically.
+
+Solution:
+
+Because we are sorting both columns in ascending order, which is the default sort order, we can leave off adding ASC.
+
+select country_id, city
+from city
+order by country_id, city;
+
+
+
+3.24 Write a query to list actors ordered by the length of their full name ("[first_name] [last_name]") descending.
+
+Solution:
+
+You can create a computed column in your SELECT statement for the length of each actor's full name and then refer to that alias in the ORDER BY clause. You may be wondering why you couldn't just write length(full_name) for the second column in your select clause - ie. why did you have to repeat "first_name || ' ' || last_name"? This is because the second derived column is not guaranteed to be evaluated after the first. There is no guaranteed order of evalution of expressions in the SELECT clause! (and other clauses in general too)
+
+select
+  first_name || ' ' || last_name as full_name,
+  length(first_name || ' ' || last_name) as len
+from actor
+order by len desc;
+
+
+
+3.25 Describe the difference between ORDER BY x, y DESC and ORDER BY x DESC, y DESC (where x and y are columns in some imaginary table you're querying)
+
+Solution:
+
+ORDER BY x, y DESC is equivalent to ORDER BY x ASC, y DESC - order first by x ascending, then by y descending. This is different from ORDER BY x DESC, y DESC - order by x descending, then by y descending. When asc/desc is omitted, ascending is the default.
+
+
+
+3.26 Fix the query below, which we wanted to use to list all the rentals that happened after 10pm at night.
+
+Solution:
+
+You can't refer to the "rental hour" alias in the where clause, so instead just repeat the expression!
+
+select rental_id, date_part('hour', rental_date) as "rental hour"
+from rental
+where date_part('hour', rental_date) >= 22;
+
+
+3.27 Write a query to return the 3 most recent payments received
+
+Solution:
+
+You'll first need to order the payments by payment date descending, which will ensure that the first rows are the most recent. Then use the limit keyword to return only the first 3.
+
+select payment_id, payment_date
+from payment
+order by payment_date desc
+limit 3;
+
+
+
+3.28 Return the 4 films with the shortest length that are not R rated. For films with the same length, order them alphabetically
+
+Solution:
+
+This was a tricky one. When building the WHERE clause we need to make sure to include films that have a NULL rating (technically they are not 'R' rated!). Also, we need to order first by length then by title to obtain alphabetical order for films of the same length. Remember, LIMIT is the very last clause to be processed.
+
+select title, length, rating
+from film
+where rating != 'R'
+  or rating is null
+order by length, title
+limit 4;
+
+
+
+3.29 Write a query to return the last 3 payments made in January, 2007
+
+Solution:
+
+You might have initially forgotten the second part of the WHERE, to make sure the payment date must be in January. You need to do this because there might be less than 3 payments made in January, and if there were, your query would actually return payments outside of January.
+
+select payment_id, amount, payment_date
+from payment
+where payment_date < '2007-02-01'
+  and payment_date >= '2007-01-01'
+order by payment_date desc
+limit 3;
+
+
+
+3.30 Can you think of a way you could, as in the previous exercise, return the last 3 payments made in January, 2007 but have those same 3 output rows ordered by date ascending? (Don't spend too long on this...)
+
+Solution:
+
+You don't yet have the tools to do this and it's a bit of a problem with using ORDER BY/LIMIT while wanting separate output row ordering. I'll show you how to handle situations like this in a future video.
+
+
+3.31 Write a query to return all the unique ratings films can have, ordered alphabetically (not including NULL)
+
+Solution:
+
+select distinct rating
+from film
+where rating is not null
+order by rating;
+
+
+
+3.32 Write a query to help us quickly see if there is any hour of the day that we have never rented a film out on (maybe the staff always head out for lunch?)
+
+Solution:
+
+You can use the date_part('hour', rental_date) function to obtain the hour part for each rental date/time. Combined with DISTINCT and ORDER BY you obtain a simple list you can scroll through and see that no, there's nothing to be alarmed about here...all hours of the day are accounted for.
+
+select distinct date_part('hour', rental_date) as hr
+from rental
+order by hr;
+
+
+
+3.33 Write a query to help quickly check whether the same rental rate is used for each rental duration (for example - is the rental rate always 4.99 when the rental duration is 3?)
+
+Solution:
+
+This query will return all unique combinations of rental_duration and rental_rate and we can see clearly now that the answer is no - many different rental rates can be used for the same rental duration.
+
+select distinct rental_duration, rental_rate
+from film
+order by rental_duration;
+
+
+
+3.34 Can you explain why the first query below works, but the second one, which simply adds the DISTINCT keyword, doesn't? (this is quite challenging)
+
+Solution:
+
+In the second query, multiple rows of actors are combined in to a single row due to the use of DISTINCT. For example, there are two actors with the first name ADAM (ADAM HOPPER and ADAM GRANT), however after the SELECT DISTINCT clause has been processed, there is only one row with first name ADAM. Ordering then by last name is undefined - eg. In the case of ADAM, Postgres has no way to know which last name should be used (HOPPER or GRANT?). In general, avoid ordering by columns you haven't selected and you can sidestep complex situations like this.
+
+
+3.35 Write a query to return an ordered list of distinct ratings for films in our films table along with their descriptions (you will have to type in the descriptions yourself)
+
+Solution:
+
+This exercise combines quite a few things we've learned so far. We use DISTINCT, IS NOT NULL, and ORDER BY to obtain a unique ordered list of all the different film ratings. Then we use the simple form of the case expression to convert each rating to a description.
+
+select distinct rating,
+  case rating
+    when 'G' then 'General'
+    when 'PG' then 'Parental Guidance Recommended'
+    when 'PG-13' then 'Parents Strongly Cautioned'
+    when 'R' then 'Restricted'
+    when 'NC-17' then 'Adults Only'
+  end as "rating description"
+from film
+where rating is not null
+order by rating;
+
+
+
+3.36 Write a query to output 'Returned' for returned rentals and 'Not Returned' for rentals that haven't been returned. Order the output to show those not returned first.
+
+Solution:
+
+Here you can use the searched form of the case expression to check when the return date is NULL and output the appropriate status.
+
+select rental_id, rental_date, return_date,
+  case
+    when return_date is null then 'Not Returned'
+    else 'Returned'
+  end as return_status
+from rental
+order by return_status;
+
+
+
+3.37 Imagine you were asked to write a query to populate a 'country picker' for some internal company dashboard. Write a query to return the countries in alphabetical order, but also with the twist that the first 3 countries in the list must be 1) Australia 2) United Kingdom 3) United States and then normal alphabetical order after that (maybe you want them first because, for example, most of your customers come from these countries)
+
+Solution:
+
+This was a tricky one so study the solution carefully and make sure you understand it. You can use a case statement in the ORDER BY clause to return a number for particular countries, which is then used for ordering. So Australia becomes 0, United Kingdom becomes 1, United States becomes 2 and every other country gets the result 3. ORDER BY first orders by these numbers, in ascending order. There is then a second order by term (the ", country" bit after the case statement ends) which then ensures that for all those countries where the result was 3, they too are ordered alphabetically.
+
+select country
+from country
+order by
+  case country
+    when 'Australia' then 0
+    when 'United Kingdom' then 1
+    when 'United States' then 2
+    else 3
+  end, country;
