@@ -1,0 +1,17 @@
+6.1 Write a query to return a list of all the films rented by PETER MENARD showing the most recent first
+
+Solution:
+
+This exercises involves quite a few joins but once that's setup it's just a matter of filtering for the right customer and ordering by the rental date.
+
+select r.rental_date, f.title
+from rental as r
+  inner join customer as c
+    on r.customer_id = c.customer_id
+  inner join inventory as i
+    on r.inventory_id = i.inventory_id
+  inner join film as f
+    on i.film_id = f.film_id
+where c.first_name = 'PETER'
+  and c.last_name = 'MENARD'
+order by r.rental_date desc;
